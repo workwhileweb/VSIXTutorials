@@ -26,10 +26,7 @@ namespace MefImportExceptionAnalyzer
         private const string ERROR_NOTIFICATION_NAMESPACE = "DebuggerShared.Services.ErrorNotification";
         private const string SYSTEM_NAMESPACE = "System";
 
-        public sealed override ImmutableArray<string> FixableDiagnosticIds
-        {
-            get { return ImmutableArray.Create(MefImportExceptionAnalyzerAnalyzer.DiagnosticId); }
-        }
+        public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(MefImportExceptionAnalyzerAnalyzer.DiagnosticId);
 
         public sealed override FixAllProvider GetFixAllProvider()
         {
@@ -51,18 +48,26 @@ namespace MefImportExceptionAnalyzer
                 diagnostic);
         }
 
-        private T FindAncestorOfType<T>(SyntaxNode node) where T : SyntaxNode
+        private static T FindAncestorOfType<T>(SyntaxNode node) where T : SyntaxNode
         {
-            if (node == null)
-                return null;
-            if (node is T)
-                return node as T;
-            return FindAncestorOfType<T>(node.Parent);
+            while (true)
+            {
+                switch (node)
+                {
+                    case null:
+                        return null;
+                    case T syntaxNode:
+                        return syntaxNode;
+                    default:
+                        node = node.Parent;
+                        break;
+                }
+            }
         }
 
         private async Task<Document> ChangeBlock(Document document, ConstructorDeclarationSyntax originalCtor, CancellationToken c)
         {
-            ConstructorDeclarationSyntax newCtor = CreateConstructorWithTryCatch(originalCtor);
+            var newCtor = CreateConstructorWithTryCatch(originalCtor);
             var root = await GetRootWithNormalizedConstructor(document, originalCtor, newCtor).ConfigureAwait(false);
             root = AddNamespaceIfMissing(root, ERROR_NOTIFICATION_NAMESPACE);
             root = AddNamespaceIfMissing(root, SYSTEM_NAMESPACE);
@@ -90,11 +95,11 @@ namespace MefImportExceptionAnalyzer
         private static async Task<CompilationUnitSyntax> GetRootWithNormalizedConstructor(Document document, ConstructorDeclarationSyntax originalCtor, ConstructorDeclarationSyntax newCtor)
         {
             var tree = await document.GetSyntaxTreeAsync().ConfigureAwait(false);
-            CompilationUnitSyntax root = await tree.GetRootAsync() as CompilationUnitSyntax;
+            var root = await tree.GetRootAsync() as CompilationUnitSyntax;
 
             root = root.ReplaceNode(originalCtor, newCtor);
             var entirelyNormalizedRoot = root.NormalizeWhitespace();
-            ConstructorDeclarationSyntax ctorInEntirelyNormalized = FindSpecificConstructor(originalCtor.ParameterList, originalCtor.Identifier.Text, entirelyNormalizedRoot);
+            var ctorInEntirelyNormalized = FindSpecificConstructor(originalCtor.ParameterList, originalCtor.Identifier.Text, entirelyNormalizedRoot);
 
             var ctorInOrig2 = FindSpecificConstructor(originalCtor.ParameterList, originalCtor.Identifier.Text, root);
 
@@ -126,7 +131,7 @@ namespace MefImportExceptionAnalyzer
             var parametersB = paramsB.Parameters;
             if (parametersA == null || parametersB == null || parametersA.Count != parametersB.Count)
                 return false;
-            for (int i = 0; i < parametersA.Count; i++)
+            for (var i = 0; i < parametersA.Count; i++)
             {
                 var a = Regex.Replace(parametersA[i].ToString(), @"\s+", "");
                 var b = Regex.Replace(parametersB[i].ToString(), @"\s+", "");

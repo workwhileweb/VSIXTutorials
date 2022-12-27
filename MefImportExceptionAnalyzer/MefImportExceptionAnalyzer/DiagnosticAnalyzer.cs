@@ -22,7 +22,7 @@ namespace MefImportExceptionAnalyzer
 
         private static DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error, isEnabledByDefault: true, description: Description);
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -33,7 +33,7 @@ namespace MefImportExceptionAnalyzer
         {
             var ctor = (ConstructorDeclarationSyntax)context.Node;
 
-            bool isDiagnosticNeeded = IsDiagNeeded(ctor);
+            var isDiagnosticNeeded = IsDiagNeeded(ctor);
 
             if (isDiagnosticNeeded)
             {
@@ -44,16 +44,16 @@ namespace MefImportExceptionAnalyzer
 
         private bool IsDiagNeeded(ConstructorDeclarationSyntax ctor)
         {
-            bool isAttributeExists = IsImportingAttributeExists(ctor);
+            var isAttributeExists = IsImportingAttributeExists(ctor);
             if (!isAttributeExists)
                 return false;
 
-            bool isWhiteSpaceOnly = IsWhiteSpaceOnly(ctor);
+            var isWhiteSpaceOnly = IsWhiteSpaceOnly(ctor);
             if (isWhiteSpaceOnly)
                 return false;
 
 
-            bool tryCatchOnAllExists = IsTryCatchStatementOnly(ctor);
+            var tryCatchOnAllExists = IsTryCatchStatementOnly(ctor);
             if (tryCatchOnAllExists)
                 return false;
 
